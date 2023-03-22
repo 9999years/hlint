@@ -21,12 +21,14 @@
 
 module Hint.NumLiteral (numLiteralHint) where
 
+import GHC.All (hlintExtensions)
 import GHC.Hs
 import GHC.LanguageExtensions.Type (Extension (..))
 import GHC.Types.SrcLoc
 import GHC.Types.SourceText
 import GHC.Util.ApiAnnotation (extensions)
 import Data.Char (isDigit, isOctDigit, isHexDigit)
+import Data.Foldable (toList)
 import Data.List (intercalate)
 import Data.Set (union)
 import Data.Generics.Uniplate.DataOnly (universeBi)
@@ -42,6 +44,9 @@ numLiteralHint _ modu =
   -- not the module so to be safe, look also at `firstDeclComments
   -- modu` (https://gitlab.haskell.org/ghc/ghc/-/merge_requests/9517).
   let exts = union (extensions (modComments modu)) (extensions (firstDeclComments modu)) in
+  -- TODO: there's a subtle bug when the module disables `NumericUnderscores`.
+  -- This seems pathological, though, because who would enable it for their
+  -- project but disable it in specific files?
   if NumericUnderscores `elem` exts then
      concatMap suggestUnderscore . universeBi
   else
